@@ -44,6 +44,9 @@ int capturer_mmap_init(PVideoStream p_video_stream);
 
 int capturer_mmap_get_frame(PVideoStream p_video_stream);
 
+void capturer_mmap_start(PVideoStream p_video_stream);
+void capturer_mmap_stop(PVideoStream p_video_stream);
+
 void capturer_mmap_exit(PVideoStream p_video_stream);
 
 

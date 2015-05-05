@@ -409,6 +409,19 @@ int capturer_mmap_get_frame(PVideoStream p_video_stream)
     return 0;
 }
 
+void capturer_mmap_stop(PVideoStream p_video_stream)
+{
+    stop_capturing (&(p_video_stream->fd));
+}
+
+void capturer_mmap_start(PVideoStream p_video_stream)
+{
+    if(start_capturing (&(p_video_stream->fd)))
+    {
+        fprintf(stderr, "Cannot capture from device %s", p_video_stream->videoName);
+    }
+}
+
 void capturer_mmap_exit(PVideoStream p_video_stream)
 {
     stop_capturing (&(p_video_stream->fd));

@@ -417,11 +417,18 @@ void yuv2rgb(int y, int u, int v, unsigned char *r, unsigned char *g, unsigned c
 
 
 void
-processRGBD()
+processRGBD(bool rgb_capture_on, bool depth_capture_on)
 {
 
-    processDepth();
-	processRGB();
+    if (depth_capture_on)
+    {
+        processDepth();
+    }
+    if (rgb_capture_on)
+    {
+        processRGB();
+    }
+
 
 	Mat depth_frame(depth_stream.height, depth_stream.width, CV_8UC1, depth_frame_buffer);
 
@@ -593,27 +600,48 @@ processRGBD()
     USE_TIMES_END_SHOW ( start, end, "process result time" );
 
 #if SHOW_RGBD_FRAME
-    cv::imshow("depth frame view", depth_frame);
+    if (depth_capture_on)
+    {
+        cv::imshow("depth frame view", depth_frame);
+    }
 
 #ifdef V4L2_PIX_FMT_INZI
-    cv::imshow("ir frame view", ir_frame);
-#endif
-    cv::imshow("RGB frame view", rgb_frame);
-
-#endif
-
-    pubRealSensePointsXYZCloudMsg(realsense_xyz_cloud);
-    if(isHaveD2RGBUVMap)
+    if (depth_capture_on)
     {
-    	pubRealSensePointsXYZRGBCloudMsg(realsense_xyzrgb_cloud);
+        cv::imshow("ir frame view", ir_frame);
+    }
+#endif
+    if (rgb_capture_on)
+    {
+        cv::imshow("RGB frame view", rgb_frame);
+    }
+
+#endif
+
+    if (depth_capture_on)
+    {
+        pubRealSensePointsXYZCloudMsg(realsense_xyz_cloud);
+        if(isHaveD2RGBUVMap && rgb_capture_on)
+        {
+            pubRealSensePointsXYZRGBCloudMsg(realsense_xyzrgb_cloud);
+        }
     }
 
 
 #ifdef V4L2_PIX_FMT_INZI
-    pubRealSenseInfraredImageMsg(ir_frame);
+    if(depth_capture_on)
+    {
+        pubRealSenseInfraredImageMsg(ir_frame);
+    }
 #endif
-    pubRealSenseDepthImageMsg(depth_frame);
-    pubRealSenseRGBImageMsg(rgb_frame);
+    if (depth_capture_on)
+    {
+        pubRealSenseDepthImageMsg(depth_frame);
+    }
+    if (rgb_capture_on)
+    {
+        pubRealSenseRGBImageMsg(rgb_frame);
+    }
 
 
 }
@@ -630,7 +658,15 @@ realsenseConfigCallback(const realsense_camera::realsenseConfig::ConstPtr &confi
 	}
 }
 
+int getNumRGBSubscribers()
+{
+    return realsense_reg_points_pub.getNumSubscribers() + realsense_rgb_image_pub.getNumSubscribers();
+}
 
+int getNumDepthSubscribers()
+{
+    return realsense_points_pub.getNumSubscribers() + realsense_reg_points_pub.getNumSubscribers() + realsense_depth_image_pub.getNumSubscribers();
+}
 
 int main(int argc, char* argv[])
 {
@@ -821,10 +857,48 @@ int main(int argc, char* argv[])
 
 
     ros::Rate loop_rate(30);
+    ros::Rate idle_rate(1);
+
+    bool rgb_capture_on = true;
+    bool depth_capture_on = true;
 
     while(ros::ok())
     {
-        processRGBD();
+        int num_rgb_subscribers = getNumRGBSubscribers();
+        int num_depth_subscribers = getNumDepthSubscribers();
+
+        if (num_rgb_subscribers == 0 && rgb_capture_on)
+        {
+            ROS_INFO("Stopping RGB stream because there are no subscribers");    
+            capturer_mmap_stop(&rgb_stream);
+            rgb_capture_on = false;
+        }
+        if (num_depth_subscribers == 0 && depth_capture_on)
+        {
+            ROS_INFO("Stopping Depth stream because there are no subscribers");    
+            capturer_mmap_stop(&depth_stream);
+            depth_capture_on = false;
+        }
+        while ((getNumRGBSubscribers() + getNumDepthSubscribers()) == 0 && ros::ok())
+        {
+            ros::spinOnce();
+            idle_rate.sleep();
+        }
+        num_rgb_subscribers = getNumRGBSubscribers();
+        num_depth_subscribers = getNumDepthSubscribers();
+        if (num_rgb_subscribers > 0 && !rgb_capture_on)
+        {
+            ROS_INFO("Starting RGB stream");    
+            capturer_mmap_start(&rgb_stream);
+            rgb_capture_on = true;
+        }
+        if (num_depth_subscribers > 0 && !depth_capture_on)
+        {
+            ROS_INFO("Starting Depth stream");    
+            capturer_mmap_start(&depth_stream);
+            depth_capture_on = true;
+        }
+        processRGBD(rgb_capture_on, depth_capture_on);
 
 #if SHOW_RGBD_FRAME
         cv::waitKey(10);
