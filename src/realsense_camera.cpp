@@ -26,6 +26,8 @@
 #include "realsense_camera/realsenseConfig.h"
 
 
+#include <dynamic_reconfigure/server.h>
+#include <realsense_camera/RealsenseCameraConfig.h>
 
 
 #define SHOW_RGBD_FRAME 0
@@ -658,6 +660,15 @@ realsenseConfigCallback(const realsense_camera::realsenseConfig::ConstPtr &confi
 	}
 }
 
+void dynamicReconfigCallback(realsense_camera::RealsenseCameraConfig &config, uint32_t level)
+{
+    depth_unit = config.depth_unit;
+    depth_scale = config.depth_scale;
+    depth_uv_enable_min = config.depth_uv_enable_min;
+    depth_uv_enable_max = config.depth_uv_enable_max;
+    sensor_depth_max = config.sensor_depth_max;
+}
+
 int getNumRGBSubscribers()
 {
     return realsense_reg_points_pub.getNumSubscribers() + realsense_rgb_image_pub.getNumSubscribers();
@@ -855,6 +866,8 @@ int main(int argc, char* argv[])
 
     ros::Subscriber config_sub = n.subscribe("/realsense_camera_config", 1, realsenseConfigCallback);
 
+    dynamic_reconfigure::Server<realsense_camera::RealsenseCameraConfig> dynamic_reconfigure_server;
+    dynamic_reconfigure_server.setCallback(boost::bind(&dynamicReconfigCallback, _1, _2));
 
     ros::Rate loop_rate(30);
     ros::Rate idle_rate(1);
