@@ -9,6 +9,8 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   image_transport
   message_generation
+  nodelet
+  pluginlib
   roscpp
   roslib
   std_msgs
@@ -154,8 +156,8 @@ add_definitions(
 ## Declare a cpp executable
 # add_executable(realsense_camera_node src/realsense_camera_node.cpp)
 
-add_executable(realsense_camera_node 
-  src/realsense_camera.cpp
+add_library(realsense_camera_node 
+  src/realsense_camera_nodelet.cpp
   src/capturer_mmap.cpp
   src/v4l_unit.cpp
   src/udev_unit.cpp
@@ -215,6 +217,7 @@ install(
     realsense_camera_node
     realsense_camera_config_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Mark cpp header files for installation

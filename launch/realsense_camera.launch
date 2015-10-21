@@ -57,7 +57,10 @@
     <arg name="rgb_camera_info_url" default="" />
     <arg name="ir_camera_info_url" default="" />
 
-    <node name="realsense_node" pkg="realsense_camera" type="realsense_camera_node" output="screen">
+    <node pkg="nodelet" type="nodelet" name="realsense_camera_manager"  args="manager" output="screen"/>
+
+    <node pkg="nodelet" type="nodelet" name="realsense_nodelet" args="load realsense_camera/RealsenseCameraNodelet realsense_camera_manager" output="screen">
+    <!--node name="realsense_node" pkg="realsense_camera" type="realsense_camera_node" output="screen"-->
     	<param name="realsense_camera_type" value="$(arg realsense_camera_type)" />
     	
     	<param name="rgb_frame_w" value="$(arg rgb_frame_w)" />
