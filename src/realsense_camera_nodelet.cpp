@@ -42,12 +42,11 @@ RealsenseCameraNodelet::~RealsenseCameraNodelet()
 
 void RealsenseCameraNodelet::onInit()
 {
-    NODELET_DEBUG("Initializing nodelet...");
+    NODELET_DEBUG("Initializing Realsense Camera nodelet...");
 
     n = getNodeHandle();
     private_node_handle_ = getPrivateNodeHandle();
     image_transport::ImageTransport image_transport(n);
-
 
     // reads parameters from ros parameter server
     readParameters();
@@ -75,7 +74,6 @@ printf("if you want IR stream, please visit\n"
 
     printf("RealSense Camera is running!\n");
 
-
 #if USE_BGR24
     rgb_frame_buffer = new unsigned char[rgb_stream.width * rgb_stream.height * 3];
 #else
@@ -99,15 +97,13 @@ printf("if you want IR stream, please visit\n"
 
     ros::Subscriber config_sub = n.subscribe("/realsense_camera_config", 1, &RealsenseCameraNodelet::realsenseConfigCallback, this);
 
-
     getRGBUVService = n.advertiseService("get_rgb_uv", &RealsenseCameraNodelet::getRGBUV, this);
 
     capturer_mmap_init_v4l2_controls();
-    dynamic_reconfigure::Server<realsense_camera::RealsenseCameraConfig> dynamic_reconfigure_server;
-    dynamic_reconfigure_server.setCallback(boost::bind(&RealsenseCameraNodelet::dynamicReconfigCallback, this, _1, _2));
+    dynamic_reconfigure_server = boost::make_shared<dynamic_reconfigure::Server<realsense_camera::RealsenseCameraConfig> >(private_node_handle_);
+    dynamic_reconfigure_server->setCallback(boost::bind(&RealsenseCameraNodelet::dynamicReconfigCallback, this, _1, _2));
 
     timer = n.createTimer(ros::Duration(0.1), boost::bind(&RealsenseCameraNodelet::timerCallback, this));
-
 }
 
 void RealsenseCameraNodelet::readParameters()

@@ -160,6 +160,8 @@ namespace realsense_camera
 
             ros::ServiceServer getRGBUVService;
 
+            boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::RealsenseCameraConfig> > dynamic_reconfigure_server;
+
             typedef struct
             {
                 int depthValue;
