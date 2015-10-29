@@ -67,7 +67,7 @@ int init_device(int *fd, char *dev_name,
 			"   bus_info = %s\n"
 			"   version = 0x%08X\n"
 			"   capabilities = 0x%08X\n"
-			"   device_caps = 0x%08X\n"
+//			"   device_caps = 0x%08X\n"
 			"   reserved[3] = [0x%08X, 0x%08X, 0x%08X]\n\n",
 			dev_name,
 			cap.driver,
@@ -75,7 +75,7 @@ int init_device(int *fd, char *dev_name,
 			cap.bus_info,
 			cap.version,
 			cap.capabilities,
-			cap.device_caps,
+//			cap.device_caps,
 			cap.reserved[0], cap.reserved[1], cap.reserved[2] );
 
 //	struct video_capability capability;
